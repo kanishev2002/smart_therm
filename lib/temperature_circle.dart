@@ -40,80 +40,81 @@ class TemperatureCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final containerSize = screenWidth / 2 - 32;
-    return SizedBox(
-      //height: containerSize + 28,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: containerSize,
-                height: containerSize,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: CustomPaint(
-                  painter: _PartialCirclePainter(
-                    fillPercentage: enabled
-                        ? (temperature - minTemperature) /
-                            (maxTemperature - minTemperature)
-                        : 1,
-                    color: getColorFromTemperature(),
-                  ),
-                ),
-              ),
-              Column(
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (icon != null) ...[
-                        icon!,
-                        const SizedBox(width: 4),
-                      ],
-                      AutoSizeText(
-                        enabled ? '${temperature.toStringAsFixed(1)}°' : 'Off',
-                        style: GoogleFonts.montserrat(
-                          textStyle: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 30,
-                          ),
-                        ),
+    return Material(
+      type: MaterialType.transparency,
+      child: SizedBox(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: containerSize,
+                  height: containerSize,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 5,
+                        blurRadius: 7,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  if (targetTemperature != null)
-                    AutoSizeText(
-                      '${targetTemperature!.toStringAsFixed(1)}°',
-                      style: GoogleFonts.montserrat(
-                        color: Colors.grey,
-                        fontSize: 15,
-                      ),
+                  child: CustomPaint(
+                    painter: _PartialCirclePainter(
+                      fillPercentage: enabled
+                          ? (temperature - minTemperature) /
+                              (maxTemperature - minTemperature)
+                          : 1,
+                      color: getColorFromTemperature(),
                     ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (label != null)
-            FittedBox(
-              child: AutoSizeText(
-                label!,
-                style: const TextStyle(fontSize: 14),
-              ),
+                  ),
+                ),
+                Column(
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icon != null) ...[
+                          icon!,
+                          const SizedBox(width: 4),
+                        ],
+                        Text(
+                          enabled
+                              ? '${temperature.toStringAsFixed(1)}°'
+                              : 'Off',
+                          style: GoogleFonts.montserrat(
+                            textStyle: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 30,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (targetTemperature != null)
+                      Text(
+                        '${targetTemperature!.toStringAsFixed(1)}°',
+                        style: GoogleFonts.montserrat(
+                          color: Colors.grey,
+                          fontSize: 15,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
-        ],
+            const SizedBox(height: 8),
+            AutoSizeText(
+              label ?? '',
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
       ),
     );
   }
