@@ -20,7 +20,7 @@ class TemperaturePresetButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ThermostatControlBloc, ThermostatControlState>(
       builder: (context, state) {
-        final deviceData = state.deviceData[state.selectedDevice];
+        final deviceData = state.deviceData[state.selectedDevice].data!;
         final deviceTemp = switch (type) {
           ControlType.temperature => deviceData.heatingTemperature,
           ControlType.hotWater => deviceData.hotWaterTemperature,

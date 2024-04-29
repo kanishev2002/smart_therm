@@ -17,10 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<ThermostatControlBloc>(
       create: (ctx) => ThermostatControlBloc(
-        networkService: NetworkService(
-          // TODO: implement actual URL when available
-          thermostatUrl: Uri(),
-        ),
+        networkService: NetworkService(),
       )..add(const FetchThermostatData()),
       child: MaterialApp(
         title: 'Smart Therm',

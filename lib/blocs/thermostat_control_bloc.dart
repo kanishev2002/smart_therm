@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/models/thermostat.dart';
@@ -25,8 +28,21 @@ class ThermostatControlBloc
     Emitter<ThermostatControlState> emit,
   ) async {
     emit(state.copyWith(status: LoadingStatus.loading));
+    if (state.deviceData.isEmpty) {
+      emit(state.copyWith(status: LoadingStatus.done));
+      return;
+    }
     try {
-      final devices = await networkService.getThermostats();
+      final status = await networkService.getThermostatStatus();
+      final devices = state.deviceData
+          .mapIndexed(
+            (idx, device) => idx == state.selectedDevice
+                ? device.copyWith(
+                    data: status,
+                  )
+                : device,
+          )
+          .toList();
       emit(
         state.copyWith(
           status: LoadingStatus.done,
@@ -39,10 +55,11 @@ class ThermostatControlBloc
     }
   }
 
-  void _onSelectDevice(
+  Future<void> _onSelectDevice(
     SelectDevice event,
     Emitter<ThermostatControlState> emit,
-  ) {
+  ) async {
+    await networkService.connectToThermostat(state.deviceData[event.index]);
     emit(
       state.copyWith(
         selectedDevice: event.index,
@@ -54,31 +71,68 @@ class ThermostatControlBloc
     ToggleBurner event,
     Emitter<ThermostatControlState> emit,
   ) {
-    final burnerOn = state.deviceData[state.selectedDevice].heatingOn;
+    final burnerOn = state.deviceData[state.selectedDevice].data!.heatingOn;
     final newData = [...state.deviceData];
-    newData[state.selectedDevice] = newData[state.selectedDevice].copyWith(
+    newData[state.selectedDevice] =
+        newData[state.selectedDevice].copyWith.data!(
       heatingOn: !burnerOn,
     );
-    emit(state.copyWith(deviceData: newData)); // Update list
+    emit(state.copyWith(deviceData: newData));
   }
 
-  void _onAddDevice(
+  Future<void> _onAddDevice(
     AddDevice event,
     Emitter<ThermostatControlState> emit,
-  ) {
-    final newData = [...state.deviceData, event.device];
-    emit(state.copyWith(deviceData: newData));
+  ) async {
+    try {
+      final deviceInfo =
+          await networkService.fetchNewThermostatData(event.device);
+
+      final thermostatWithData = event.device.copyWith(data: deviceInfo);
+      final newData = [
+        ...state.deviceData,
+        thermostatWithData,
+      ];
+
+      if (newData.length == 1) {
+        await networkService.connectToThermostat(thermostatWithData);
+      }
+
+      emit(state.copyWith(deviceData: newData));
+
+      // final mockData = ThermostatData(
+      //   heatingOn: true,
+      //   hotWaterOn: true,
+      //   heatingTemperature: 10,
+      //   hotWaterTemperature: 10,
+      //   roomTemperature1: 10,
+      //   roomTemperature2: 10,
+      // );
+
+      // emit(
+      //   state.copyWith(
+      //     deviceData: [
+      //       ...state.deviceData,
+      //       event.device.copyWith(data: mockData),
+      //     ],
+      //   ),
+      // );
+    } catch (e) {
+      emit(state.copyWith(status: LoadingStatus.error));
+    }
   }
 
   void _onSetHeatingTemperature(
     SetHeatingTemperature event,
     Emitter<ThermostatControlState> emit,
   ) {
-    final device = state.deviceData[state.selectedDevice].copyWith(
+    final device = state.deviceData[state.selectedDevice];
+    final updated = device.copyWith.data?.call(
       heatingTemperature: event.temperature.toDouble(),
     );
+    networkService.setParameters(updated!.data!);
     final newData = [...state.deviceData];
-    newData[state.selectedDevice] = device;
+    newData[state.selectedDevice] = updated;
     emit(state.copyWith(deviceData: newData));
   }
 
@@ -86,11 +140,29 @@ class ThermostatControlBloc
     SetWaterTemperature event,
     Emitter<ThermostatControlState> emit,
   ) {
-    final device = state.deviceData[state.selectedDevice].copyWith(
+    final device = state.deviceData[state.selectedDevice];
+    final updated = device.copyWith.data?.call(
       hotWaterTemperature: event.temperature.toDouble(),
     );
     final newData = [...state.deviceData];
-    newData[state.selectedDevice] = device;
+    newData[state.selectedDevice] = updated ?? device;
     emit(state.copyWith(deviceData: newData));
+  }
+
+  @override
+  void onTransition(
+    Transition<ThermostatControlEvent, ThermostatControlState> transition,
+  ) {
+    super.onTransition(transition);
+    const encoder = JsonEncoder.withIndent('  ');
+
+    debugPrint('''
+> > > T H E R M O S T A T   C O N T R O L   B L O C
+Current state: 
+${encoder.convert(transition.currentState.toJson())}
+
+Next state:
+${encoder.convert(transition.nextState.toJson())}
+''');
   }
 }

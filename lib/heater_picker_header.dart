@@ -30,15 +30,17 @@ class HeaterPickerHeader extends StatelessWidget {
                     itemCount: devices.length,
                     itemBuilder: (context, idx) {
                       final device = devices[idx];
+                      final isSelected = idx == state.selectedDevice;
                       return ListTile(
                         title: Text(device.name),
-                        trailing: const Icon(Icons.check),
+                        trailing: isSelected ? const Icon(Icons.check) : null,
                         onTap: () {
                           context.read<ThermostatControlBloc>().add(
                                 SelectDevice(
                                   index: idx,
                                 ),
                               );
+                          Navigator.pop(context);
                         },
                       );
                     },

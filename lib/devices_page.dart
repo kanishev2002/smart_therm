@@ -42,12 +42,7 @@ class _DevicesPageState extends State<DevicesPage> {
                   AddDevice(
                     device: Thermostat(
                       name: deviceData['deviceName']!,
-                      heatingOn: true,
-                      hotWaterOn: true,
-                      heatingTemperature: 22,
-                      hotWaterTemperature: 50,
-                      roomTemperature1: 19,
-                      roomTemperature2: 22,
+                      ip: deviceData['deviceIP']!,
                     ),
                   ),
                 );

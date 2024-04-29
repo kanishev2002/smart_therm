@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:smart_therm/models/thermostat.dart';
 
 part 'thermostat_control_state.freezed.dart';
+part 'thermostat_control_state.g.dart';
 
 enum LoadingStatus {
   loading,
@@ -20,4 +21,7 @@ class ThermostatControlState with _$ThermostatControlState {
     @Default(0) int selectedDevice,
     @Default(LoadingStatus.loading) LoadingStatus status,
   }) = _ThermostatControlState;
+
+  factory ThermostatControlState.fromJson(Map<String, dynamic> json) =>
+      _$ThermostatControlStateFromJson(json);
 }

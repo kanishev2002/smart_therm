@@ -40,7 +40,7 @@ class ManageDevicePage extends StatelessWidget {
                   Hero(
                     tag: heroTag,
                     child: TemperatureCircle(
-                      temperature: selectedDevice.heatingTemperature,
+                      temperature: selectedDevice.data!.heatingTemperature,
                       minTemperature: temperatureCircle.minTemperature,
                       maxTemperature: temperatureCircle.maxTemperature,
                       icon: temperatureCircle.icon,
