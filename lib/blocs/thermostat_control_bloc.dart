@@ -19,6 +19,7 @@ class ThermostatControlBloc
     on<AddDevice>(_onAddDevice);
     on<SetHeatingTemperature>(_onSetHeatingTemperature);
     on<SetWaterTemperature>(_onSetWaterTemperature);
+    //on<SetUsePID>(_onSetUsePID);
   }
 
   final NetworkService networkService;
@@ -84,6 +85,7 @@ class ThermostatControlBloc
     AddDevice event,
     Emitter<ThermostatControlState> emit,
   ) async {
+    emit(state.copyWith(status: LoadingStatus.loading));
     try {
       final deviceInfo =
           await networkService.fetchNewThermostatData(event.device);
@@ -98,7 +100,12 @@ class ThermostatControlBloc
         await networkService.connectToThermostat(thermostatWithData);
       }
 
-      emit(state.copyWith(deviceData: newData));
+      emit(
+        state.copyWith(
+          deviceData: newData,
+          status: LoadingStatus.done,
+        ),
+      );
 
       // final mockData = ThermostatData(
       //   heatingOn: true,
@@ -127,10 +134,10 @@ class ThermostatControlBloc
     Emitter<ThermostatControlState> emit,
   ) {
     final device = state.deviceData[state.selectedDevice];
-    final updated = device.copyWith.data?.call(
-      heatingTemperature: event.temperature.toDouble(),
+    final updated = device.copyWith(
+      heatingTemperature: event.temperature,
     );
-    networkService.setParameters(updated!.data!);
+    networkService.setParameters(updated);
     final newData = [...state.deviceData];
     newData[state.selectedDevice] = updated;
     emit(state.copyWith(deviceData: newData));
@@ -141,11 +148,12 @@ class ThermostatControlBloc
     Emitter<ThermostatControlState> emit,
   ) {
     final device = state.deviceData[state.selectedDevice];
-    final updated = device.copyWith.data?.call(
-      hotWaterTemperature: event.temperature.toDouble(),
+    final updated = device.copyWith(
+      hotWaterTemperature: event.temperature,
     );
+    networkService.setParameters(updated);
     final newData = [...state.deviceData];
-    newData[state.selectedDevice] = updated ?? device;
+    newData[state.selectedDevice] = updated;
     emit(state.copyWith(deviceData: newData));
   }
 

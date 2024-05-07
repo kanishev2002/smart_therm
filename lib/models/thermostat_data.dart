@@ -8,10 +8,11 @@ class ThermostatData with _$ThermostatData {
   factory ThermostatData({
     required bool heatingOn,
     required bool hotWaterOn,
-    required double heatingTemperature,
-    required double hotWaterTemperature,
-    required double? roomTemperature1,
-    required double? roomTemperature2,
+    required bool hasTemperatureSensors,
+    required double actualHeatingTemperature,
+    required double actualHotWaterTemperature,
+    required double roomTemperature1,
+    required double roomTemperature2,
   }) = _ThermostatData;
 
   factory ThermostatData.fromJson(Map<String, dynamic> json) =>

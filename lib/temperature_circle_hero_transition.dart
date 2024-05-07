@@ -6,14 +6,12 @@ class TemperatureCircleHeroTransition extends StatelessWidget {
   const TemperatureCircleHeroTransition({
     required this.temperatureCircle,
     required this.heroTag,
-    required this.presets,
     required this.type,
     super.key,
   });
 
   final TemperatureCircle temperatureCircle;
   final String heroTag;
-  final TemperaturePresets presets;
   final ControlType type;
 
   @override
@@ -28,7 +26,6 @@ class TemperatureCircleHeroTransition extends StatelessWidget {
                   heroTag: heroTag,
                   targetTemperature: temperatureCircle.temperature,
                   temperatureCircle: temperatureCircle,
-                  presets: presets,
                   controlType: type,
                 );
               },

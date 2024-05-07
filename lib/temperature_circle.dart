@@ -9,11 +9,11 @@ class TemperatureCircle extends StatelessWidget {
     required this.temperature,
     required this.minTemperature,
     required this.maxTemperature,
-    super.key,
     this.targetTemperature,
     this.label,
     this.enabled = true,
     this.icon,
+    super.key,
   });
 
   final double temperature;

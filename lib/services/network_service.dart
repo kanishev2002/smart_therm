@@ -66,8 +66,9 @@ class NetworkService {
 
       final boolFlags = controllerData.getInt16(6, Endian.little);
 
-      final heatingEnabled = (boolFlags & Flags.heating.code) != 0;
-      final hotWaterEnabled = (boolFlags & Flags.hotWater.code) != 0;
+      final heatingEnabled = (boolFlags & Flags.heating) != 0;
+      final hotWaterEnabled = (boolFlags & Flags.hotWater) != 0;
+      final hasTemperatureSensors = (boolFlags & Flags.temperatureSensors) != 0;
 
       final boilerTemperature = controllerData.getFloat32(24, Endian.little);
       final tSet = controllerData.getFloat32(32, Endian.little);
@@ -77,8 +78,9 @@ class NetworkService {
       return ThermostatData(
         heatingOn: heatingEnabled,
         hotWaterOn: hotWaterEnabled,
-        heatingTemperature: boilerTemperature,
-        hotWaterTemperature: tSet,
+        hasTemperatureSensors: hasTemperatureSensors,
+        actualHeatingTemperature: boilerTemperature,
+        actualHotWaterTemperature: tSet,
         roomTemperature1: t1,
         roomTemperature2: t2,
       );
@@ -89,8 +91,9 @@ class NetworkService {
   }
 
   Future<ThermostatResponse> setParameters(
-    ThermostatData thermostatSettings,
+    Thermostat thermostat,
   ) async {
+    final thermostatSettings = thermostat.data!;
     var flags = 0;
     if (thermostatSettings.heatingOn) {
       flags |= 0x01;
@@ -101,9 +104,19 @@ class NetworkService {
     final data = Uint8List(64);
     data.buffer.asByteData()
       ..setInt16(0, flags, Endian.little)
-      ..setInt32(
+      ..setFloat32(
         2,
-        thermostatSettings.heatingTemperature.toInt(),
+        thermostat.heatingTemperature.toDouble(),
+        Endian.little,
+      )
+      ..setFloat32(
+        6,
+        thermostat.heatingTemperature.toDouble(),
+        Endian.little,
+      )
+      ..setFloat32(
+        10,
+        thermostat.hotWaterTemperature.toDouble(),
         Endian.little,
       );
 
@@ -157,13 +170,8 @@ t2: $t2
   }
 }
 
-enum Flags {
-  heating(code: 0x01),
-  hotWater(code: 0x02);
-
-  const Flags({
-    required this.code,
-  });
-
-  final int code;
+class Flags {
+  static const heating = 0x01;
+  static const hotWater = 0x02;
+  static const temperatureSensors = 0x40;
 }

@@ -10,6 +10,9 @@ class Thermostat with _$Thermostat {
   factory Thermostat({
     required String name,
     required String ip,
+    @Default(false) bool usePID,
+    @Default(50) int heatingTemperature,
+    @Default(50) int hotWaterTemperature,
     ThermostatData? data,
   }) = _Thermostat;
 

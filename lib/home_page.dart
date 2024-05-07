@@ -21,9 +21,8 @@ class HomePage extends StatelessWidget {
         }
         final device = state.deviceData[state.selectedDevice];
         final data = device.data!;
-        final temp1 = data.roomTemperature1!;
-        final temp2 = data.roomTemperature2 ?? temp1;
-        final roomTemperature = (temp1 + temp2) / 2;
+        final temp1 = data.roomTemperature1;
+        final temp2 = data.roomTemperature2;
         return RefreshIndicator(
           onRefresh: () async {
             final bloc = context.read<ThermostatControlBloc>();
@@ -43,10 +42,10 @@ class HomePage extends StatelessWidget {
                   children: [
                     TemperatureCircleHeroTransition(
                       temperatureCircle: TemperatureCircle(
-                        temperature: roomTemperature,
-                        targetTemperature: device.data!.heatingTemperature,
+                        temperature: device.heatingTemperature.toDouble(),
+                        targetTemperature: data.actualHeatingTemperature,
                         minTemperature: -5,
-                        maxTemperature: 35,
+                        maxTemperature: device.usePID ? 35 : 100,
                         label: 'Water heater temperature',
                         icon: const Icon(
                           Icons.local_fire_department,
@@ -55,20 +54,14 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       heroTag: 'Water heater temperature',
-                      presets: TemperaturePresets(
-                        normal: 22,
-                        hot: 30,
-                        eco: 10,
-                        custom: 15,
-                      ),
                       type: ControlType.temperature,
                     ),
                     TemperatureCircleHeroTransition(
                       temperatureCircle: TemperatureCircle(
-                        temperature: data.hotWaterTemperature,
-                        targetTemperature: data.hotWaterTemperature,
+                        temperature: device.hotWaterTemperature.toDouble(),
+                        targetTemperature: data.actualHotWaterTemperature,
                         maxTemperature: 100,
-                        minTemperature: 0,
+                        minTemperature: 5,
                         label: 'Hot water temperature',
                         icon: const Icon(
                           Icons.water_drop_outlined,
@@ -77,36 +70,32 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       heroTag: 'Hot water temperature',
-                      presets: TemperaturePresets(
-                        normal: 50,
-                        hot: 80,
-                        eco: 40,
-                        custom: 60,
-                      ),
                       type: ControlType.hotWater,
                     ),
-                    TemperatureCircle(
-                      temperature: temp1,
-                      minTemperature: 0,
-                      maxTemperature: 35,
-                      label: 'Room temp 1',
-                      icon: const Icon(
-                        Icons.device_thermostat,
-                        size: 28,
-                        color: Colors.redAccent,
+                    if (data.hasTemperatureSensors) ...[
+                      TemperatureCircle(
+                        temperature: temp1,
+                        minTemperature: 0,
+                        maxTemperature: 35,
+                        label: 'Room temp 1',
+                        icon: const Icon(
+                          Icons.device_thermostat,
+                          size: 28,
+                          color: Colors.redAccent,
+                        ),
                       ),
-                    ),
-                    TemperatureCircle(
-                      temperature: temp2,
-                      minTemperature: 0,
-                      maxTemperature: 35,
-                      label: 'Room temp 2',
-                      icon: const Icon(
-                        Icons.thermostat,
-                        size: 28,
-                        color: Colors.redAccent,
+                      TemperatureCircle(
+                        temperature: temp2,
+                        minTemperature: 0,
+                        maxTemperature: 35,
+                        label: 'Room temp 2',
+                        icon: const Icon(
+                          Icons.thermostat,
+                          size: 28,
+                          color: Colors.redAccent,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(

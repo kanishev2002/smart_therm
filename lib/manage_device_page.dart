@@ -10,7 +10,6 @@ class ManageDevicePage extends StatelessWidget {
     required this.heroTag,
     required this.targetTemperature,
     required this.temperatureCircle,
-    required this.presets,
     required this.controlType,
     super.key,
   });
@@ -18,7 +17,6 @@ class ManageDevicePage extends StatelessWidget {
   final String heroTag;
   final double targetTemperature;
   final TemperatureCircle temperatureCircle;
-  final TemperaturePresets presets;
   final ControlType controlType;
 
   @override
@@ -26,6 +24,27 @@ class ManageDevicePage extends StatelessWidget {
     return BlocBuilder<ThermostatControlBloc, ThermostatControlState>(
       builder: (context, state) {
         final selectedDevice = state.deviceData[state.selectedDevice];
+        final presets = selectedDevice.usePID
+            ? TemperaturePresets(
+                normal: 22,
+                hot: 30,
+                eco: 10,
+                custom: 15,
+              )
+            : TemperaturePresets(
+                normal: 50,
+                hot: 80,
+                eco: 40,
+                custom: 60,
+              );
+        final minTemperature = controlType == ControlType.hotWater ? 40 : 5;
+        final maxTemperature =
+            controlType == ControlType.hotWater || !selectedDevice.usePID
+                ? 90
+                : 30;
+        final temperature = controlType == ControlType.temperature
+            ? selectedDevice.heatingTemperature
+            : selectedDevice.hotWaterTemperature;
         return Scaffold(
           appBar: AppBar(
             title: Text(temperatureCircle.label ?? ''),
@@ -40,9 +59,9 @@ class ManageDevicePage extends StatelessWidget {
                   Hero(
                     tag: heroTag,
                     child: TemperatureCircle(
-                      temperature: selectedDevice.data!.heatingTemperature,
-                      minTemperature: temperatureCircle.minTemperature,
-                      maxTemperature: temperatureCircle.maxTemperature,
+                      temperature: temperature.toDouble(),
+                      minTemperature: minTemperature.toDouble(),
+                      maxTemperature: maxTemperature.toDouble(),
                       icon: temperatureCircle.icon,
                     ),
                   ),

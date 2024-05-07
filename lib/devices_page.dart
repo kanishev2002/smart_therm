@@ -30,19 +30,22 @@ class _DevicesPageState extends State<DevicesPage> {
         return Scaffold(
           floatingActionButton: TextButton(
             onPressed: () async {
-              final deviceData =
-                  await showModalBottomSheet<Map<String, String>>(
-                context: context,
-                builder: (ctx) {
-                  return const DeviceCreationForm();
-                },
+              final deviceData = await Navigator.push(
+                context,
+                MaterialPageRoute<Map<String, Object>>(
+                  builder: (ctx) => const DeviceCreationForm(),
+                ),
               );
+
               if (deviceData != null) {
+                final usePID = deviceData['usePID']! as bool;
                 bloc.add(
                   AddDevice(
                     device: Thermostat(
-                      name: deviceData['deviceName']!,
-                      ip: deviceData['deviceIP']!,
+                      name: deviceData['deviceName']! as String,
+                      ip: deviceData['deviceIP']! as String,
+                      usePID: usePID,
+                      heatingTemperature: usePID ? 22 : 50,
                     ),
                   ),
                 );
