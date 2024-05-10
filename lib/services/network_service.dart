@@ -71,7 +71,7 @@ class NetworkService {
       final hasTemperatureSensors = (boolFlags & Flags.temperatureSensors) != 0;
 
       final boilerTemperature = controllerData.getFloat32(24, Endian.little);
-      final tSet = controllerData.getFloat32(32, Endian.little);
+      final hotWater = controllerData.getFloat32(40, Endian.little);
       final t1 = controllerData.getFloat32(56, Endian.little);
       final t2 = controllerData.getFloat32(60, Endian.little);
 
@@ -80,7 +80,7 @@ class NetworkService {
         hotWaterOn: hotWaterEnabled,
         hasTemperatureSensors: hasTemperatureSensors,
         actualHeatingTemperature: boilerTemperature,
-        actualHotWaterTemperature: tSet,
+        actualHotWaterTemperature: hotWater,
         roomTemperature1: t1,
         roomTemperature2: t2,
       );

@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:smart_therm/models/thermostat.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/services/network_service.dart';
@@ -10,16 +11,23 @@ import 'package:smart_therm/services/network_service.dart';
 part 'thermostat_control_event.dart';
 
 class ThermostatControlBloc
-    extends Bloc<ThermostatControlEvent, ThermostatControlState> {
+    extends HydratedBloc<ThermostatControlEvent, ThermostatControlState> {
   ThermostatControlBloc({required this.networkService})
-      : super(ThermostatControlState(deviceData: [])) {
+      : super(
+          ThermostatControlState(
+            status: LoadingStatus.done,
+            deviceData: [],
+            customHeatingTemperature: 60,
+            customHotWaterTemperature: 60,
+          ),
+        ) {
     on<FetchThermostatData>(_onFetchThermostatData);
     on<SelectDevice>(_onSelectDevice);
     on<ToggleBurner>(_onToggleBurner);
     on<AddDevice>(_onAddDevice);
     on<SetHeatingTemperature>(_onSetHeatingTemperature);
     on<SetWaterTemperature>(_onSetWaterTemperature);
-    //on<SetUsePID>(_onSetUsePID);
+    on<AppStartRefresh>(_onAppStartRefresh);
   }
 
   final NetworkService networkService;
@@ -60,12 +68,19 @@ class ThermostatControlBloc
     SelectDevice event,
     Emitter<ThermostatControlState> emit,
   ) async {
-    await networkService.connectToThermostat(state.deviceData[event.index]);
-    emit(
-      state.copyWith(
-        selectedDevice: event.index,
-      ),
-    );
+    emit(state.copyWith(status: LoadingStatus.loading));
+    try {
+      await networkService.connectToThermostat(state.deviceData[event.index]);
+      emit(
+        state.copyWith(
+          selectedDevice: event.index,
+          status: LoadingStatus.done,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Could not select device: $e');
+      emit(state.copyWith(status: LoadingStatus.error));
+    }
   }
 
   void _onToggleBurner(
@@ -104,6 +119,8 @@ class ThermostatControlBloc
         state.copyWith(
           deviceData: newData,
           status: LoadingStatus.done,
+          customHeatingTemperature: event.device.usePID ? 15 : 60,
+          customHotWaterTemperature: 60,
         ),
       );
 
@@ -129,32 +146,88 @@ class ThermostatControlBloc
     }
   }
 
-  void _onSetHeatingTemperature(
+  Future<void> _onSetHeatingTemperature(
     SetHeatingTemperature event,
     Emitter<ThermostatControlState> emit,
-  ) {
-    final device = state.deviceData[state.selectedDevice];
-    final updated = device.copyWith(
-      heatingTemperature: event.temperature,
-    );
-    networkService.setParameters(updated);
-    final newData = [...state.deviceData];
-    newData[state.selectedDevice] = updated;
-    emit(state.copyWith(deviceData: newData));
+  ) async {
+    try {
+      final device = state.deviceData[state.selectedDevice];
+      final updated = device.copyWith(
+        heatingTemperature: event.temperature,
+      );
+      await networkService.setParameters(updated);
+      final newData = [...state.deviceData];
+      newData[state.selectedDevice] = updated;
+      final customTemp =
+          event.isCustom ? event.temperature : state.customHeatingTemperature;
+      emit(
+        state.copyWith(
+          deviceData: newData,
+          customHeatingTemperature: customTemp,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Could not set heating temperature: $e');
+      emit(state.copyWith(status: LoadingStatus.error));
+    }
   }
 
-  void _onSetWaterTemperature(
+  Future<void> _onSetWaterTemperature(
     SetWaterTemperature event,
     Emitter<ThermostatControlState> emit,
-  ) {
-    final device = state.deviceData[state.selectedDevice];
-    final updated = device.copyWith(
-      hotWaterTemperature: event.temperature,
-    );
-    networkService.setParameters(updated);
-    final newData = [...state.deviceData];
-    newData[state.selectedDevice] = updated;
-    emit(state.copyWith(deviceData: newData));
+  ) async {
+    try {
+      final device = state.deviceData[state.selectedDevice];
+      final updated = device.copyWith(
+        hotWaterTemperature: event.temperature,
+      );
+      await networkService.setParameters(updated);
+      final newData = [...state.deviceData];
+      newData[state.selectedDevice] = updated;
+      final customTemp =
+          event.isCustom ? event.temperature : state.customHotWaterTemperature;
+      emit(
+        state.copyWith(
+          deviceData: newData,
+          customHotWaterTemperature: customTemp,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Could not set water temperature: $e');
+      emit(state.copyWith(status: LoadingStatus.error));
+    }
+  }
+
+  Future<void> _onAppStartRefresh(
+    AppStartRefresh event,
+    Emitter<ThermostatControlState> emit,
+  ) async {
+    emit(state.copyWith(status: LoadingStatus.loading));
+    try {
+      await networkService.connectToThermostat(
+        state.deviceData[state.selectedDevice],
+      );
+
+      final status = await networkService.getThermostatStatus();
+      final devices = state.deviceData
+          .mapIndexed(
+            (idx, device) => idx == state.selectedDevice
+                ? device.copyWith(
+                    data: status,
+                  )
+                : device,
+          )
+          .toList();
+      emit(
+        state.copyWith(
+          status: LoadingStatus.done,
+          deviceData: devices,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Could not refresh data: $e');
+      emit(state.copyWith(status: LoadingStatus.error));
+    }
   }
 
   @override
@@ -173,4 +246,11 @@ Next state:
 ${encoder.convert(transition.nextState.toJson())}
 ''');
   }
+
+  @override
+  ThermostatControlState? fromJson(Map<String, dynamic> json) =>
+      ThermostatControlState.fromJson(json);
+
+  @override
+  Map<String, dynamic>? toJson(ThermostatControlState state) => state.toJson();
 }

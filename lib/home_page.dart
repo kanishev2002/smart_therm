@@ -5,13 +5,26 @@ import 'package:smart_therm/manage_device_page.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/temperature_circle.dart';
 import 'package:smart_therm/temperature_circle_hero_transition.dart';
+import 'package:smart_therm/utils/utilities.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThermostatControlBloc, ThermostatControlState>(
+    return BlocConsumer<ThermostatControlBloc, ThermostatControlState>(
+      listener: (context, state) {
+        final isDisplaying = ModalRoute.of(context)?.isCurrent ?? false;
+        if (state.status.isError && isDisplaying) {
+          Utilities.showError(
+            context,
+            content: const Text(
+              'Could not receive data from thermostat. '
+              'Please check your network connection and try again.',
+            ),
+          );
+        }
+      },
       builder: (context, state) {
         if (state.status.isLoading) {
           return const Center(child: CircularProgressIndicator());

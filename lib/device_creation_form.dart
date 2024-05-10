@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
 import 'package:smart_therm/models/thermostat.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
+import 'package:smart_therm/utils/utilities.dart';
 
 class DeviceCreationForm extends StatefulWidget {
   const DeviceCreationForm({super.key});
@@ -17,42 +18,19 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
   final _deviceIPController = TextEditingController();
   bool _usePID = false;
 
-  void _showError() {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: const SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Could not connect to device.'),
-                Text(
-                  'Please make sure that the information you entered'
-                  ' is correct and try again',
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: Navigator.of(ctx).pop,
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ThermostatControlBloc, ThermostatControlState>(
       listener: (context, state) {
         if (state.status.isError) {
-          _showError();
+          Utilities.showError(
+            context,
+            content: const Text(
+              'Could not connect to device. '
+              'Please make sure that the information you entered'
+              ' is correct and try again',
+            ),
+          );
         } else if (state.status.isDone) {
           Navigator.pop(context);
         }

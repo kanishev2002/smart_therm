@@ -9,12 +9,16 @@ class TemperaturePresetButton extends StatelessWidget {
     required this.temperature,
     required this.title,
     required this.type,
+    this.isCustom = false,
+    this.updatePresets,
     super.key,
   });
 
   final int temperature;
   final String title;
   final ControlType type;
+  final bool isCustom;
+  final void Function(int)? updatePresets;
 
   @override
   Widget build(BuildContext context) {
@@ -42,14 +46,29 @@ class TemperaturePresetButton extends StatelessWidget {
                   )
                 : null,
           ),
-          onPressed: () {
+          onPressed: () async {
+            var temperature = this.temperature;
+            if (isCustom) {
+              temperature = await showDialog<int>(
+                    context: context,
+                    builder: (context) => _CustomTemperatureDialog(
+                      defaultTemperature: temperature,
+                    ),
+                  ) ??
+                  temperature;
+            }
+            if (!context.mounted) {
+              return;
+            }
             final bloc = context.read<ThermostatControlBloc>();
             final event = switch (type) {
               ControlType.temperature => SetHeatingTemperature(
                   temperature: temperature,
+                  isCustom: isCustom,
                 ),
               ControlType.hotWater => SetWaterTemperature(
                   temperature: temperature,
+                  isCustom: isCustom,
                 ),
             };
             bloc.add(event);
@@ -79,6 +98,59 @@ class TemperaturePresetButton extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _CustomTemperatureDialog extends StatelessWidget {
+  _CustomTemperatureDialog({required this.defaultTemperature})
+      : temperatureController = TextEditingController(
+          text: defaultTemperature.toString(),
+        );
+
+  final int defaultTemperature;
+  final TextEditingController temperatureController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Enter Custom Temperature'),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: temperatureController,
+          decoration: const InputDecoration(labelText: 'Temperature'),
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter a temperature';
+            }
+            // Check if value is a positive integer
+            if (int.tryParse(value) == null || int.parse(value) <= 0) {
+              return 'Please enter a positive integer';
+            }
+            return null;
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              _formKey.currentState!.save();
+              Navigator.of(context).pop(int.parse(temperatureController.text));
+            }
+          },
+          child: const Text('Submit'),
+        ),
+      ],
     );
   }
 }

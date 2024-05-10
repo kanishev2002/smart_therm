@@ -31,13 +31,21 @@ final class AddDevice extends ThermostatControlEvent {
 final class SetHeatingTemperature extends ThermostatControlEvent {
   const SetHeatingTemperature({
     required this.temperature,
+    this.isCustom = false,
   });
   final int temperature;
+  final bool isCustom;
 }
 
 final class SetWaterTemperature extends ThermostatControlEvent {
   const SetWaterTemperature({
     required this.temperature,
+    this.isCustom = false,
   });
   final int temperature;
+  final bool isCustom;
+}
+
+final class AppStartRefresh extends ThermostatControlEvent {
+  const AppStartRefresh();
 }

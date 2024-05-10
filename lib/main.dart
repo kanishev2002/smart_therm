@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
 import 'package:smart_therm/devices_page.dart';
 import 'package:smart_therm/heater_picker_header.dart';
 import 'package:smart_therm/home_page.dart';
 import 'package:smart_therm/services/network_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: await getApplicationDocumentsDirectory(),
+  );
   runApp(const MyApp());
 }
 
@@ -16,9 +22,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ThermostatControlBloc>(
-      create: (ctx) => ThermostatControlBloc(
-        networkService: NetworkService(),
-      )..add(const FetchThermostatData()),
+      create: (ctx) {
+        final bloc = ThermostatControlBloc(
+          networkService: NetworkService(),
+        );
+
+        if (bloc.state.deviceData.isNotEmpty) {
+          bloc.add(const AppStartRefresh());
+        }
+
+        return bloc;
+      },
       child: MaterialApp(
         title: 'Smart Therm',
         color: Colors.white,

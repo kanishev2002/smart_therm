@@ -18,6 +18,8 @@ enum LoadingStatus {
 class ThermostatControlState with _$ThermostatControlState {
   factory ThermostatControlState({
     required List<Thermostat> deviceData,
+    required int customHeatingTemperature,
+    required int customHotWaterTemperature,
     @Default(0) int selectedDevice,
     @Default(LoadingStatus.loading) LoadingStatus status,
   }) = _ThermostatControlState;

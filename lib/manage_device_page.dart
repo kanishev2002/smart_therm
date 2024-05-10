@@ -4,6 +4,7 @@ import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/temperature_circle.dart';
 import 'package:smart_therm/temperature_preset_button.dart';
+import 'package:smart_therm/utils/utilities.dart';
 
 class ManageDevicePage extends StatelessWidget {
   const ManageDevicePage({
@@ -21,22 +22,60 @@ class ManageDevicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThermostatControlBloc, ThermostatControlState>(
+    return BlocConsumer<ThermostatControlBloc, ThermostatControlState>(
+      listener: (context, state) {
+        if (state.status.isError) {
+          Utilities.showError(
+            context,
+            content: const Text(
+              'Could not change thermostat settings. '
+              'Please check your connection and try again.',
+            ),
+          );
+        }
+      },
       builder: (context, state) {
         final selectedDevice = state.deviceData[state.selectedDevice];
-        final presets = selectedDevice.usePID
-            ? TemperaturePresets(
-                normal: 22,
-                hot: 30,
-                eco: 10,
-                custom: 15,
-              )
-            : TemperaturePresets(
-                normal: 50,
-                hot: 80,
-                eco: 40,
-                custom: 60,
-              );
+        // final presets =
+        //     selectedDevice.usePID && controlType == ControlType.temperature
+        //         ? TemperaturePresets(
+        //             normal: 22,
+        //             hot: 30,
+        //             eco: 10,
+        //             custom: 15,
+        //           )
+        //         : TemperaturePresets(
+        //             normal: 50,
+        //             hot: 80,
+        //             eco: 40,
+        //             custom: 60,
+        //           );
+
+        final TemperaturePresets presets;
+        if (controlType == ControlType.temperature) {
+          if (selectedDevice.usePID) {
+            presets = TemperaturePresets(
+              normal: 22,
+              hot: 30,
+              eco: 10,
+              custom: state.customHeatingTemperature,
+            );
+          } else {
+            presets = TemperaturePresets(
+              normal: 50,
+              hot: 80,
+              eco: 40,
+              custom: state.customHeatingTemperature,
+            );
+          }
+        } else {
+          presets = TemperaturePresets(
+            normal: 50,
+            hot: 80,
+            eco: 40,
+            custom: state.customHotWaterTemperature,
+          );
+        }
         final minTemperature = controlType == ControlType.hotWater ? 40 : 5;
         final maxTemperature =
             controlType == ControlType.hotWater || !selectedDevice.usePID
@@ -95,6 +134,7 @@ class ManageDevicePage extends StatelessWidget {
                         temperature: presets.custom,
                         title: 'Custom ⚙️',
                         type: controlType,
+                        isCustom: true,
                       ),
                     ],
                   ),

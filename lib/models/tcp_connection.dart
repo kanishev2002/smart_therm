@@ -41,7 +41,7 @@ class TCPConnection {
       return success;
     } catch (e) {
       debugPrint('Could not establish connection: $e');
-      return false;
+      rethrow;
     }
   }
 
