@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
+import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/manage_device_page.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 
@@ -115,20 +116,22 @@ class _CustomTemperatureDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Enter Custom Temperature'),
+      title: const Text(ManageDevicesPageConstants.customTemperatureTitle),
       content: Form(
         key: _formKey,
         child: TextFormField(
           controller: temperatureController,
-          decoration: const InputDecoration(labelText: 'Temperature'),
+          decoration: const InputDecoration(
+            labelText: ManageDevicesPageConstants.customTemperatureLabel,
+          ),
           keyboardType: TextInputType.number,
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Please enter a temperature';
+              return ManageDevicesPageConstants.emptyTemperatureError;
             }
             // Check if value is a positive integer
             if (int.tryParse(value) == null || int.parse(value) <= 0) {
-              return 'Please enter a positive integer';
+              return ManageDevicesPageConstants.negativeTemperatureError;
             }
             return null;
           },
@@ -139,7 +142,7 @@ class _CustomTemperatureDialog extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: const Text('Cancel'),
+          child: const Text(ManageDevicesPageConstants.cancel),
         ),
         TextButton(
           onPressed: () {
@@ -148,7 +151,7 @@ class _CustomTemperatureDialog extends StatelessWidget {
               Navigator.of(context).pop(int.parse(temperatureController.text));
             }
           },
-          child: const Text('Submit'),
+          child: const Text(ManageDevicesPageConstants.submit),
         ),
       ],
     );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
+import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/device_creation_form.dart';
+import 'package:smart_therm/device_editing_page.dart';
 import 'package:smart_therm/models/thermostat.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 
@@ -58,7 +60,7 @@ class _DevicesPageState extends State<DevicesPage> {
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Add new device'),
+            child: const Text(DevicesPageConstants.addNewDevice),
           ),
           body: SafeArea(
             child: ListView.separated(
@@ -70,14 +72,17 @@ class _DevicesPageState extends State<DevicesPage> {
                     size: 40,
                   ),
                   title: Text(devices[idx].name),
-                  // trailing: const Icon(Icons.arrow_forward_ios),
-                  // onTap: () => Navigator.of(context).push(
-                  //   MaterialPageRoute<void>(
-                  //     builder: (ctx) {
-                  //       return Scaffold(body: Text(devices[idx]));
-                  //     },
-                  //   ),
-                  // ),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (ctx) {
+                        return DeviceEditingPage(
+                          index: idx,
+                          device: devices[idx],
+                        );
+                      },
+                    ),
+                  ),
                 );
               },
               separatorBuilder: (_, __) => const Divider(

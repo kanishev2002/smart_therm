@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
+import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 
 class HeaterPickerHeader extends StatelessWidget {
@@ -15,7 +16,7 @@ class HeaterPickerHeader extends StatelessWidget {
         final devices = state.deviceData;
         if (devices.isEmpty) {
           return Text(
-            'Dashboard',
+            HomePageConstants.dashboardHeader,
             style: Theme.of(context).textTheme.headlineSmall,
           );
         }

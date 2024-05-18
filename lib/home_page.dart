@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
+import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/manage_device_page.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/temperature_circle.dart';
@@ -19,8 +20,7 @@ class HomePage extends StatelessWidget {
           Utilities.showError(
             context,
             content: const Text(
-              'Could not receive data from thermostat. '
-              'Please check your network connection and try again.',
+              HomePageConstants.connectionError,
             ),
           );
         }
@@ -30,7 +30,7 @@ class HomePage extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (state.deviceData.isEmpty) {
-          return const Center(child: Text('No devices added yet'));
+          return const Center(child: Text(HomePageConstants.noDevicesAdded));
         }
         final device = state.deviceData[state.selectedDevice];
         final data = device.data!;
@@ -59,14 +59,14 @@ class HomePage extends StatelessWidget {
                         targetTemperature: data.actualHeatingTemperature,
                         minTemperature: -5,
                         maxTemperature: device.usePID ? 35 : 100,
-                        label: 'Water heater temperature',
+                        label: HomePageConstants.waterHeaterTemperature,
                         icon: const Icon(
                           Icons.local_fire_department,
                           size: 28,
                           color: Colors.orange,
                         ),
                       ),
-                      heroTag: 'Water heater temperature',
+                      heroTag: HomePageConstants.waterHeaterTemperature,
                       type: ControlType.temperature,
                     ),
                     TemperatureCircleHeroTransition(
@@ -75,14 +75,14 @@ class HomePage extends StatelessWidget {
                         targetTemperature: data.actualHotWaterTemperature,
                         maxTemperature: 100,
                         minTemperature: 5,
-                        label: 'Hot water temperature',
+                        label: HomePageConstants.hotWaterTemperature,
                         icon: const Icon(
                           Icons.water_drop_outlined,
                           size: 28,
                           color: Colors.blue,
                         ),
                       ),
-                      heroTag: 'Hot water temperature',
+                      heroTag: HomePageConstants.hotWaterTemperature,
                       type: ControlType.hotWater,
                     ),
                     if (data.hasTemperatureSensors) ...[
@@ -90,7 +90,7 @@ class HomePage extends StatelessWidget {
                         temperature: temp1,
                         minTemperature: 0,
                         maxTemperature: 35,
-                        label: 'Room temp 1',
+                        label: '${HomePageConstants.roomTemperature} 1',
                         icon: const Icon(
                           Icons.device_thermostat,
                           size: 28,
@@ -101,7 +101,7 @@ class HomePage extends StatelessWidget {
                         temperature: temp2,
                         minTemperature: 0,
                         maxTemperature: 35,
-                        label: 'Room temp 2',
+                        label: '${HomePageConstants.roomTemperature} 2',
                         icon: const Icon(
                           Icons.thermostat,
                           size: 28,
@@ -138,7 +138,7 @@ class HomePage extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'Burner ${data.heatingOn ? "ON" : "OFF"}',
+                      '${HomePageConstants.burner} ${data.heatingOn ? HomePageConstants.on : HomePageConstants.off}',
                       style: const TextStyle(fontSize: 20),
                     ),
                   ],

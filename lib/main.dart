@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
+import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/devices_page.dart';
 import 'package:smart_therm/heater_picker_header.dart';
 import 'package:smart_therm/home_page.dart';
@@ -67,15 +70,15 @@ class _MyHomePageState extends State<MyHomePage> {
     NavigationDestination(
       selectedIcon: Icon(Icons.home),
       icon: Icon(Icons.home_outlined),
-      label: 'Dashboard',
+      label: NavigationBarConstants.dashboard,
     ),
     NavigationDestination(
       icon: Icon(Icons.list_alt),
-      label: 'Devices',
+      label: NavigationBarConstants.devices,
     ),
     NavigationDestination(
       icon: Icon(Icons.auto_graph),
-      label: 'Graphs',
+      label: NavigationBarConstants.graphs,
     ),
   ];
   final _destinationPages = [

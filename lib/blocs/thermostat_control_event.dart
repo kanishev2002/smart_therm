@@ -49,3 +49,25 @@ final class SetWaterTemperature extends ThermostatControlEvent {
 final class AppStartRefresh extends ThermostatControlEvent {
   const AppStartRefresh();
 }
+
+final class UpdateDevice extends ThermostatControlEvent {
+  const UpdateDevice({
+    required this.device,
+    required this.index,
+  });
+
+  final Thermostat device;
+  final int index;
+}
+
+final class DeleteDevice extends ThermostatControlEvent {
+  const DeleteDevice({
+    required this.index,
+  });
+
+  final int index;
+}
+
+final class AutomaticDataRefresh extends ThermostatControlEvent {
+  const AutomaticDataRefresh();
+}

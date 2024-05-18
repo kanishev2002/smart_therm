@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_therm/constants.dart';
 
 class Utilities {
   static void showError(
@@ -10,7 +11,7 @@ class Utilities {
       barrierDismissible: false,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: const Text(ErrorDialogConstants.error),
           content: content,
           actions: [
             TextButton(

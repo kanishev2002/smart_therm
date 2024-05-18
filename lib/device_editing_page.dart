@@ -6,18 +6,56 @@ import 'package:smart_therm/models/thermostat.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/utils/utilities.dart';
 
-class DeviceCreationForm extends StatefulWidget {
-  const DeviceCreationForm({super.key});
+class DeviceEditingPage extends StatefulWidget {
+  DeviceEditingPage({
+    required this.index,
+    required this.device,
+    super.key,
+  })  : _deviceIPController = TextEditingController(text: device.ip),
+        _deviceNameController = TextEditingController(text: device.name);
+
+  final int index;
+  final Thermostat device;
+  final TextEditingController _deviceNameController;
+  final TextEditingController _deviceIPController;
 
   @override
-  State<DeviceCreationForm> createState() => _DeviceCreationFormState();
+  State<DeviceEditingPage> createState() => _DeviceEditingPageState();
 }
 
-class _DeviceCreationFormState extends State<DeviceCreationForm> {
+class _DeviceEditingPageState extends State<DeviceEditingPage> {
   final _formKey = GlobalKey<FormState>();
-  final _deviceNameController = TextEditingController();
-  final _deviceIPController = TextEditingController();
-  bool _usePID = false;
+  late var _usePID = widget.device.usePID;
+
+  void _showDeleteDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text(AddEditFormConstants.forgetDeviceDialogTitle),
+          content: const Text(AddEditFormConstants.forgetDeviceDialogBody),
+          actions: [
+            TextButton(
+              onPressed: () {
+                ctx.read<ThermostatControlBloc>().add(
+                      DeleteDevice(
+                        index: widget.index,
+                      ),
+                    );
+                Navigator.of(ctx).pop();
+              },
+              child: const Text(AddEditFormConstants.yes),
+            ),
+            TextButton(
+              onPressed: Navigator.of(ctx).pop,
+              child: const Text(AddEditFormConstants.no),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +77,7 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
           canPop: !state.status.isLoading,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text(AddEditFormConstants.addTitle),
+              title: const Text(AddEditFormConstants.editTitle),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.check),
@@ -48,15 +86,16 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
                       return;
                     }
                     if (_formKey.currentState!.validate()) {
-                      final newDevice = Thermostat(
-                        name: _deviceNameController.text,
-                        ip: _deviceIPController.text,
+                      final currentDevice = state.deviceData[widget.index];
+                      final updatedDevice = currentDevice.copyWith(
+                        name: widget._deviceNameController.text,
+                        ip: widget._deviceIPController.text,
                         usePID: _usePID,
-                        heatingTemperature: _usePID ? 22 : 50,
                       );
                       context.read<ThermostatControlBloc>().add(
-                            AddDevice(
-                              device: newDevice,
+                            UpdateDevice(
+                              device: updatedDevice,
+                              index: widget.index,
                             ),
                           );
                     }
@@ -73,7 +112,7 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
                     child: Column(
                       children: [
                         TextFormField(
-                          controller: _deviceNameController,
+                          controller: widget._deviceNameController,
                           decoration: const InputDecoration(
                             labelText: AddEditFormConstants.deviceNameLabel,
                             border: OutlineInputBorder(),
@@ -87,7 +126,7 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
-                          controller: _deviceIPController,
+                          controller: widget._deviceIPController,
                           decoration: const InputDecoration(
                             labelText: AddEditFormConstants.ipFieldLabel,
                             border: OutlineInputBorder(),
@@ -119,6 +158,20 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
                             const SizedBox(width: 8),
                             const Text(AddEditFormConstants.usePIDLabel),
                           ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextButton.icon(
+                          onPressed: _showDeleteDialog,
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                          ),
+                          label: const Text(
+                            AddEditFormConstants.forgetThisDeviceLabel,
+                            style: TextStyle(
+                              color: Colors.red,
+                            ),
+                          ),
                         ),
                       ],
                     ),

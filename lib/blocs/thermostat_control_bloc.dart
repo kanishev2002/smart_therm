@@ -28,9 +28,18 @@ class ThermostatControlBloc
     on<SetHeatingTemperature>(_onSetHeatingTemperature);
     on<SetWaterTemperature>(_onSetWaterTemperature);
     on<AppStartRefresh>(_onAppStartRefresh);
+    on<UpdateDevice>(_onUpdateDevice);
+    on<DeleteDevice>(_onDeleteDevice);
+    on<AutomaticDataRefresh>(_onAutomaticDataRefresh);
+
+    autoRefreshTimer = Timer.periodic(
+      const Duration(minutes: 1),
+      _autoRefreshData,
+    );
   }
 
   final NetworkService networkService;
+  late final Timer autoRefreshTimer;
 
   Future<void> _onFetchThermostatData(
     FetchThermostatData event,
@@ -83,17 +92,24 @@ class ThermostatControlBloc
     }
   }
 
-  void _onToggleBurner(
+  Future<void> _onToggleBurner(
     ToggleBurner event,
     Emitter<ThermostatControlState> emit,
-  ) {
-    final burnerOn = state.deviceData[state.selectedDevice].data!.heatingOn;
-    final newData = [...state.deviceData];
-    newData[state.selectedDevice] =
-        newData[state.selectedDevice].copyWith.data!(
-      heatingOn: !burnerOn,
-    );
-    emit(state.copyWith(deviceData: newData));
+  ) async {
+    try {
+      final burnerOn = state.deviceData[state.selectedDevice].data!.heatingOn;
+      final updatedDevice =
+          state.deviceData[state.selectedDevice].copyWith.data!(
+        heatingOn: !burnerOn,
+      );
+      final newData = [...state.deviceData];
+      await networkService.setParameters(updatedDevice);
+      newData[state.selectedDevice] = updatedDevice;
+      emit(state.copyWith(deviceData: newData));
+    } catch (e) {
+      debugPrint('Unable to turn off heating: $e');
+      emit(state.copyWith(status: LoadingStatus.error));
+    }
   }
 
   Future<void> _onAddDevice(
@@ -228,6 +244,74 @@ class ThermostatControlBloc
       debugPrint('Could not refresh data: $e');
       emit(state.copyWith(status: LoadingStatus.error));
     }
+  }
+
+  Future<void> _onUpdateDevice(
+    UpdateDevice event,
+    Emitter<ThermostatControlState> emit,
+  ) async {
+    try {
+      final currentDevice = state.deviceData[event.index];
+      var updatedDevice = event.device;
+
+      if (currentDevice.ip != updatedDevice.ip) {
+        emit(state.copyWith(status: LoadingStatus.loading));
+        await networkService.connectToThermostat(updatedDevice);
+        final data = await networkService.getThermostatStatus();
+        updatedDevice = updatedDevice.copyWith(data: data);
+      }
+
+      if (currentDevice.usePID != updatedDevice.usePID) {
+        updatedDevice = updatedDevice.copyWith(
+          heatingTemperature: updatedDevice.usePID ? 22 : 50,
+        );
+      }
+
+      final updatedData = [...state.deviceData];
+      updatedData[event.index] = updatedDevice;
+      emit(
+        state.copyWith(
+          status: LoadingStatus.done,
+          deviceData: updatedData,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Could not update device: $e');
+    }
+  }
+
+  Future<void> _onDeleteDevice(
+    DeleteDevice event,
+    Emitter<ThermostatControlState> emit,
+  ) async {
+    final updatedData = [...state.deviceData]..removeAt(event.index);
+    emit(state.copyWith(deviceData: updatedData, status: LoadingStatus.done));
+  }
+
+  Future<void> _onAutomaticDataRefresh(
+    AutomaticDataRefresh event,
+    Emitter<ThermostatControlState> emit,
+  ) async {
+    try {
+      if (state.status.isLoading) {
+        await stream
+            .firstWhere((newState) => !newState.status.isLoading)
+            .timeout(const Duration(seconds: 5));
+      }
+      final data = await networkService.getThermostatStatus();
+      final updatedDevice = state.deviceData[state.selectedDevice].copyWith(
+        data: data,
+      );
+      final updatedDevices = [...state.deviceData];
+      updatedDevices[state.selectedDevice] = updatedDevice;
+      emit(state.copyWith(deviceData: updatedDevices));
+    } catch (e) {
+      debugPrint('Auto refresh failed: $e');
+    }
+  }
+
+  void _autoRefreshData(Timer t) {
+    add(const AutomaticDataRefresh());
   }
 
   @override

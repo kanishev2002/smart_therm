@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
+import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/temperature_circle.dart';
 import 'package:smart_therm/temperature_preset_button.dart';
@@ -28,8 +29,7 @@ class ManageDevicePage extends StatelessWidget {
           Utilities.showError(
             context,
             content: const Text(
-              'Could not change thermostat settings. '
-              'Please check your connection and try again.',
+              ManageDevicesPageConstants.couldNotChangeSettings,
             ),
           );
         }
@@ -106,7 +106,7 @@ class ManageDevicePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Set Target Temperature',
+                    ManageDevicesPageConstants.setTargetTemperature,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 16),
@@ -117,22 +117,22 @@ class ManageDevicePage extends StatelessWidget {
                     children: [
                       TemperaturePresetButton(
                         temperature: presets.normal,
-                        title: 'Normal ☀️',
+                        title: '${ManageDevicesPageConstants.normalPreset} ☀️',
                         type: controlType,
                       ),
                       TemperaturePresetButton(
                         temperature: presets.hot,
-                        title: 'Hot 🔥',
+                        title: '${ManageDevicesPageConstants.hotPreset} 🔥',
                         type: controlType,
                       ),
                       TemperaturePresetButton(
                         temperature: presets.eco,
-                        title: 'Eco 🌱',
+                        title: '${ManageDevicesPageConstants.ecoPreset} 🌱',
                         type: controlType,
                       ),
                       TemperaturePresetButton(
                         temperature: presets.custom,
-                        title: 'Custom ⚙️',
+                        title: '${ManageDevicesPageConstants.customPreset} ⚙️',
                         type: controlType,
                         isCustom: true,
                       ),
