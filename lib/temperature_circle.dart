@@ -6,20 +6,20 @@ import 'package:google_fonts/google_fonts.dart';
 
 class TemperatureCircle extends StatelessWidget {
   const TemperatureCircle({
-    required this.temperature,
+    required this.targetTemperature,
     required this.minTemperature,
     required this.maxTemperature,
-    this.targetTemperature,
+    this.actualTemperature,
     this.label,
     this.enabled = true,
     this.icon,
     super.key,
   });
 
-  final double temperature;
+  final double targetTemperature;
   final double minTemperature;
   final double maxTemperature;
-  final double? targetTemperature;
+  final double? actualTemperature;
   final String? label;
   final bool enabled;
   final Icon? icon;
@@ -29,9 +29,10 @@ class TemperatureCircle extends StatelessWidget {
       return Colors.grey;
     }
     final midpoint = (minTemperature + maxTemperature) / 2;
-    final intensity =
-        (temperature - midpoint).abs() / (maxTemperature - midpoint) * 0.4;
-    return temperature < midpoint
+    final intensity = (targetTemperature - midpoint).abs() /
+        (maxTemperature - midpoint) *
+        0.4;
+    return targetTemperature < midpoint
         ? Colors.blue.withOpacity(0.6 + intensity)
         : const Color(0xFFF00000).withOpacity(0.6 + intensity);
   }
@@ -67,7 +68,7 @@ class TemperatureCircle extends StatelessWidget {
                   child: CustomPaint(
                     painter: _PartialCirclePainter(
                       fillPercentage: enabled
-                          ? (temperature - minTemperature) /
+                          ? (targetTemperature - minTemperature) /
                               (maxTemperature - minTemperature)
                           : 1,
                       color: getColorFromTemperature(),
@@ -85,7 +86,7 @@ class TemperatureCircle extends StatelessWidget {
                         ],
                         Text(
                           enabled
-                              ? '${temperature.toStringAsFixed(1)}°'
+                              ? '${targetTemperature.toStringAsFixed(1)}°'
                               : 'Off',
                           style: GoogleFonts.montserrat(
                             textStyle: const TextStyle(
@@ -96,9 +97,9 @@ class TemperatureCircle extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (targetTemperature != null)
+                    if (actualTemperature != null)
                       Text(
-                        '${targetTemperature!.toStringAsFixed(1)}°',
+                        '${actualTemperature!.toStringAsFixed(1)}°',
                         style: GoogleFonts.montserrat(
                           color: Colors.grey,
                           fontSize: 15,

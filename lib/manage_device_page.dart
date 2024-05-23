@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
 import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
+import 'package:smart_therm/on_off_button.dart';
 import 'package:smart_therm/temperature_circle.dart';
 import 'package:smart_therm/temperature_preset_button.dart';
 import 'package:smart_therm/utils/utilities.dart';
@@ -36,20 +37,7 @@ class ManageDevicePage extends StatelessWidget {
       },
       builder: (context, state) {
         final selectedDevice = state.deviceData[state.selectedDevice];
-        // final presets =
-        //     selectedDevice.usePID && controlType == ControlType.temperature
-        //         ? TemperaturePresets(
-        //             normal: 22,
-        //             hot: 30,
-        //             eco: 10,
-        //             custom: 15,
-        //           )
-        //         : TemperaturePresets(
-        //             normal: 50,
-        //             hot: 80,
-        //             eco: 40,
-        //             custom: 60,
-        //           );
+        final data = selectedDevice.data!;
 
         final TemperaturePresets presets;
         if (controlType == ControlType.temperature) {
@@ -70,17 +58,18 @@ class ManageDevicePage extends StatelessWidget {
           }
         } else {
           presets = TemperaturePresets(
-            normal: 50,
-            hot: 80,
-            eco: 40,
+            normal: 30,
+            hot: 50,
+            eco: 25,
             custom: state.customHotWaterTemperature,
           );
         }
-        final minTemperature = controlType == ControlType.hotWater ? 40 : 5;
-        final maxTemperature =
-            controlType == ControlType.hotWater || !selectedDevice.usePID
-                ? 90
-                : 30;
+        final minTemperature = controlType == ControlType.hotWater ? 20 : 5;
+        final maxTemperature = controlType == ControlType.hotWater
+            ? 50
+            : selectedDevice.usePID
+                ? 30
+                : 90;
         final temperature = controlType == ControlType.temperature
             ? selectedDevice.heatingTemperature
             : selectedDevice.hotWaterTemperature;
@@ -98,7 +87,7 @@ class ManageDevicePage extends StatelessWidget {
                   Hero(
                     tag: heroTag,
                     child: TemperatureCircle(
-                      temperature: temperature.toDouble(),
+                      targetTemperature: temperature.toDouble(),
                       minTemperature: minTemperature.toDouble(),
                       maxTemperature: maxTemperature.toDouble(),
                       icon: temperatureCircle.icon,
@@ -137,6 +126,22 @@ class ManageDevicePage extends StatelessWidget {
                         isCustom: true,
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 32),
+                  OnOffButton(
+                    onPressed: () {
+                      context.read<ThermostatControlBloc>().add(
+                            controlType == ControlType.temperature
+                                ? const ToggleHeating()
+                                : const ToggleHotWater(),
+                          );
+                    },
+                    active: controlType == ControlType.temperature
+                        ? data.heatingOn
+                        : data.hotWaterOn,
+                    label: controlType == ControlType.temperature
+                        ? ManageDevicesPageConstants.centralHeating
+                        : ManageDevicesPageConstants.hotWater,
                   ),
                 ],
               ),

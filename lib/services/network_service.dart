@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:smart_therm/models/miscellaneous_data.dart';
 import 'package:smart_therm/models/tcp_connection.dart';
 import 'package:smart_therm/models/thermostat.dart';
 import 'package:smart_therm/models/thermostat_data.dart';
@@ -83,6 +84,7 @@ class NetworkService {
         actualHotWaterTemperature: hotWater,
         roomTemperature1: t1,
         roomTemperature2: t2,
+        miscellaneousData: _getMiscData(controllerData),
       );
     } catch (e) {
       debugPrint(e.toString());
@@ -127,6 +129,26 @@ class NetworkService {
     return response;
   }
 
+  MiscellaneousData _getMiscData(ByteData controllerData) {
+    final boolFlags = controllerData.getInt16(6, Endian.little);
+
+    final openThermStatus = controllerData.getInt16(8, Endian.little);
+    final boilerStatus = controllerData.getInt32(20, Endian.little);
+    final retT = controllerData.getFloat32(28, Endian.little);
+    final modulation = controllerData.getFloat32(44, Endian.little);
+    final pressure = controllerData.getFloat32(48, Endian.little);
+
+    return MiscellaneousData(
+      secondHeatingCircuitAvailable: (boolFlags & 0x20) != 0,
+      burnerOn: true, // TODO: find out how to check
+      openThermStatus: openThermStatus,
+      boilerStatus: boilerStatus,
+      returningTemp: retT,
+      modulation: modulation,
+      pressure: pressure,
+    );
+  }
+
   void _printDebugInfo(ByteData controllerData) {
     final boolFlags = controllerData.getInt16(6, Endian.little);
 
@@ -137,6 +159,7 @@ class NetworkService {
     final tSet = controllerData.getFloat32(32, Endian.little);
     final tSet_r = controllerData.getFloat32(36, Endian.little);
     final dhw_t = controllerData.getFloat32(40, Endian.little);
+    final modulation = controllerData.getFloat32(44, Endian.little);
     final pressure = controllerData.getFloat32(48, Endian.little);
     final status = controllerData.getInt32(52, Endian.little);
     final t1 = controllerData.getFloat32(56, Endian.little);
@@ -162,6 +185,7 @@ retT: $retT
 tSet: $tSet
 tSet_r: $tSet_r
 dhw_t: $dhw_t
+modulation: $modulation
 Pressure: $pressure
 Status: $status
 t1: $t1

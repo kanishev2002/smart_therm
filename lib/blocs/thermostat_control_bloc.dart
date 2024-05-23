@@ -23,7 +23,8 @@ class ThermostatControlBloc
         ) {
     on<FetchThermostatData>(_onFetchThermostatData);
     on<SelectDevice>(_onSelectDevice);
-    on<ToggleBurner>(_onToggleBurner);
+    on<ToggleHeating>(_onToggleHeating);
+    on<ToggleHotWater>(_onToggleHotWater);
     on<AddDevice>(_onAddDevice);
     on<SetHeatingTemperature>(_onSetHeatingTemperature);
     on<SetWaterTemperature>(_onSetWaterTemperature);
@@ -92,8 +93,8 @@ class ThermostatControlBloc
     }
   }
 
-  Future<void> _onToggleBurner(
-    ToggleBurner event,
+  Future<void> _onToggleHeating(
+    ToggleHeating event,
     Emitter<ThermostatControlState> emit,
   ) async {
     try {
@@ -307,6 +308,27 @@ class ThermostatControlBloc
       emit(state.copyWith(deviceData: updatedDevices));
     } catch (e) {
       debugPrint('Auto refresh failed: $e');
+    }
+  }
+
+  Future<void> _onToggleHotWater(
+    ToggleHotWater event,
+    Emitter<ThermostatControlState> emit,
+  ) async {
+    try {
+      final hotWaterOn =
+          state.deviceData[state.selectedDevice].data!.hotWaterOn;
+      final updatedDevice =
+          state.deviceData[state.selectedDevice].copyWith.data!(
+        hotWaterOn: !hotWaterOn,
+      );
+      final newData = [...state.deviceData];
+      await networkService.setParameters(updatedDevice);
+      newData[state.selectedDevice] = updatedDevice;
+      emit(state.copyWith(deviceData: newData));
+    } catch (e) {
+      debugPrint('Unable to turn off hot water: $e');
+      emit(state.copyWith(status: LoadingStatus.error));
     }
   }
 

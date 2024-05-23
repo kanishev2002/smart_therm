@@ -2,7 +2,8 @@ class AddEditFormConstants {
   static const addTitle = 'Добавление устройства';
   static const editTitle = 'Редактировать Котел';
   static const connectionError =
-      'Не удалось подключиться к устройству. Пожалуйста убедитесь, что введенная информация верна и попробуйте еще раз.';
+      'Не удалось подключиться к устройству. Пожалуйста убедитесь, что '
+      'введенная информация верна и попробуйте еще раз.';
   static const deviceNameLabel = 'Имя котла';
   static const emptyDeviceNameError = 'Пожалуйста введите имя устройства';
   static const ipFieldLabel = 'IP котла';
@@ -19,8 +20,8 @@ class AddEditFormConstants {
 
 class HomePageConstants {
   static const dashboardHeader = 'Панель управления';
-  static const connectionError =
-      'Не удалось получить данные с бойлера. Пожалуйста проверьте соединение и попробуйте еще раз.';
+  static const connectionError = 'Не удалось получить данные с бойлера. '
+      'Пожалуйста проверьте соединение и попробуйте еще раз.';
   static const noDevicesAdded = 'У Вас пока нет подключенных устройств';
   static const waterHeaterTemperature = 'Темп. теплоносителя';
   static const hotWaterTemperature = 'Темп. горячей воды';
@@ -42,7 +43,8 @@ class NavigationBarConstants {
 
 class ManageDevicesPageConstants {
   static const couldNotChangeSettings =
-      'Не удалось изменить настройки котла. Пожалуйста проверьте соединения и попробуйте еще раз.';
+      'Не удалось изменить настройки котла. Пожалуйста проверьте соединения '
+      'и попробуйте еще раз.';
   static const setTargetTemperature = 'Задать целевую температуру';
   static const normalPreset = 'Стандартная';
   static const hotPreset = 'Горячая';
@@ -55,6 +57,8 @@ class ManageDevicesPageConstants {
       'Пожалуйста введите целое положительное число';
   static const submit = 'Задать';
   static const cancel = 'Отмена';
+  static const centralHeating = 'Отопление';
+  static const hotWater = 'Горячая вода';
 }
 
 class ErrorDialogConstants {

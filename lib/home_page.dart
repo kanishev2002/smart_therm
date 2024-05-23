@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
 import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/manage_device_page.dart';
+import 'package:smart_therm/misc_data_card.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/temperature_circle.dart';
 import 'package:smart_therm/temperature_circle_hero_transition.dart';
@@ -36,6 +37,7 @@ class HomePage extends StatelessWidget {
         final data = device.data!;
         final temp1 = data.roomTemperature1;
         final temp2 = data.roomTemperature2;
+        final averageTemperature = (temp1 + temp2) / 2;
         return RefreshIndicator(
           onRefresh: () async {
             final bloc = context.read<ThermostatControlBloc>();
@@ -55,8 +57,11 @@ class HomePage extends StatelessWidget {
                   children: [
                     TemperatureCircleHeroTransition(
                       temperatureCircle: TemperatureCircle(
-                        temperature: device.heatingTemperature.toDouble(),
-                        targetTemperature: data.actualHeatingTemperature,
+                        enabled: data.heatingOn,
+                        targetTemperature: device.heatingTemperature.toDouble(),
+                        actualTemperature: device.usePID
+                            ? averageTemperature
+                            : data.actualHeatingTemperature,
                         minTemperature: -5,
                         maxTemperature: device.usePID ? 35 : 100,
                         label: HomePageConstants.waterHeaterTemperature,
@@ -71,8 +76,10 @@ class HomePage extends StatelessWidget {
                     ),
                     TemperatureCircleHeroTransition(
                       temperatureCircle: TemperatureCircle(
-                        temperature: device.hotWaterTemperature.toDouble(),
-                        targetTemperature: data.actualHotWaterTemperature,
+                        enabled: data.hotWaterOn,
+                        targetTemperature:
+                            device.hotWaterTemperature.toDouble(),
+                        actualTemperature: data.actualHotWaterTemperature,
                         maxTemperature: 100,
                         minTemperature: 5,
                         label: HomePageConstants.hotWaterTemperature,
@@ -85,64 +92,12 @@ class HomePage extends StatelessWidget {
                       heroTag: HomePageConstants.hotWaterTemperature,
                       type: ControlType.hotWater,
                     ),
-                    if (data.hasTemperatureSensors) ...[
-                      TemperatureCircle(
-                        temperature: temp1,
-                        minTemperature: 0,
-                        maxTemperature: 35,
-                        label: '${HomePageConstants.roomTemperature} 1',
-                        icon: const Icon(
-                          Icons.device_thermostat,
-                          size: 28,
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                      TemperatureCircle(
-                        temperature: temp2,
-                        minTemperature: 0,
-                        maxTemperature: 35,
-                        label: '${HomePageConstants.roomTemperature} 2',
-                        icon: const Icon(
-                          Icons.thermostat,
-                          size: 28,
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
                 const SizedBox(
                   height: 32,
                 ),
-                Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        context
-                            .read<ThermostatControlBloc>()
-                            .add(const ToggleBurner());
-                      },
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(16),
-                        foregroundColor:
-                            data.heatingOn ? Colors.blue : Colors.orange,
-                      ),
-                      child: Icon(
-                        data.heatingOn
-                            ? Icons.whatshot
-                            : Icons.whatshot_outlined,
-                        color: data.heatingOn ? Colors.orange : Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      '${HomePageConstants.burner} ${data.heatingOn ? HomePageConstants.on : HomePageConstants.off}',
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                  ],
-                ),
+                MiscDataCard(data: data),
               ],
             ),
           ),

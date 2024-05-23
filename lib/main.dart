@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
 import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/devices_page.dart';
+import 'package:smart_therm/graphs_page.dart';
 import 'package:smart_therm/heater_picker_header.dart';
 import 'package:smart_therm/home_page.dart';
 import 'package:smart_therm/services/network_service.dart';
@@ -84,7 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final _destinationPages = [
     const HomePage(),
     const DevicesPage(),
-    const Text('Graphs'),
+    GraphsPage(),
   ];
 
   @override

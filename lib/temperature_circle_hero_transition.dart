@@ -16,38 +16,41 @@ class TemperatureCircleHeroTransition extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: GestureDetector(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (context) {
-                return ManageDevicePage(
-                  heroTag: heroTag,
-                  targetTemperature: temperatureCircle.temperature,
-                  temperatureCircle: temperatureCircle,
-                  controlType: type,
-                );
-              },
-            ),
-          );
-        },
-        child: Stack(
-          children: [
-            const Positioned(
-              top: 0,
-              right: 0,
-              child: Icon(
-                Icons.arrow_right,
-                color: Colors.grey,
-                size: 22,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (context) {
+                  return ManageDevicePage(
+                    heroTag: heroTag,
+                    targetTemperature: temperatureCircle.targetTemperature,
+                    temperatureCircle: temperatureCircle,
+                    controlType: type,
+                  );
+                },
               ),
-            ),
-            Hero(
-              tag: heroTag,
-              child: temperatureCircle,
-            ),
-          ],
+            );
+          },
+          child: Stack(
+            children: [
+              const Positioned(
+                top: 0,
+                right: 0,
+                child: Icon(
+                  Icons.arrow_right,
+                  color: Colors.grey,
+                  size: 22,
+                ),
+              ),
+              Hero(
+                tag: heroTag,
+                child: temperatureCircle,
+              ),
+            ],
+          ),
         ),
       ),
     );

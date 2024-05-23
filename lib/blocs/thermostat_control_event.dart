@@ -16,8 +16,12 @@ final class SelectDevice extends ThermostatControlEvent {
   final int index;
 }
 
-final class ToggleBurner extends ThermostatControlEvent {
-  const ToggleBurner();
+final class ToggleHeating extends ThermostatControlEvent {
+  const ToggleHeating();
+}
+
+final class ToggleHotWater extends ThermostatControlEvent {
+  const ToggleHotWater();
 }
 
 final class AddDevice extends ThermostatControlEvent {
