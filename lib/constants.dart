@@ -1,8 +1,7 @@
 class AddEditFormConstants {
   static const addTitle = 'Добавление устройства';
   static const editTitle = 'Редактировать Котел';
-  static const connectionError =
-      'Не удалось подключиться к устройству. Пожалуйста убедитесь, что '
+  static const connectionError = 'Не удалось подключиться к устройству. Пожалуйста убедитесь, что '
       'введенная информация верна и попробуйте еще раз.';
   static const deviceNameLabel = 'Имя котла';
   static const emptyDeviceNameError = 'Пожалуйста введите имя устройства';
@@ -10,12 +9,16 @@ class AddEditFormConstants {
   static const emptyIpError = 'Пожалуйста введите IP устройства';
   static const incorrectIpError = 'Пожалуйста введите корректный IP адрес';
   static const usePIDLabel = 'Использовать PID';
+  static const useMQTTLabel = 'Использовать MQTT';
+  static const mqttAddressLabel = 'Адрес MQTT сервера';
+  static const mqttUsernameLabel = 'MQTT логин';
+  static const mqttPasswordLabel = 'MQTT пароль';
   static const forgetThisDeviceLabel = 'Забыть это устройство';
   static const forgetDeviceDialogTitle = 'Удалить котел?';
-  static const forgetDeviceDialogBody =
-      'Вы уверены что хотите забыть это устройство?';
+  static const forgetDeviceDialogBody = 'Вы уверены что хотите забыть это устройство?';
   static const yes = 'Да';
   static const no = 'Нет';
+  static const thisFieldIsRequired = 'Это поле обязательное';
 }
 
 class HomePageConstants {
@@ -53,8 +56,7 @@ class ManageDevicesPageConstants {
   static const customTemperatureTitle = 'Введите температуру';
   static const customTemperatureLabel = 'Температура';
   static const emptyTemperatureError = 'Пожалуйста введите температуру';
-  static const negativeTemperatureError =
-      'Пожалуйста введите целое положительное число';
+  static const negativeTemperatureError = 'Пожалуйста введите целое положительное число';
   static const submit = 'Задать';
   static const cancel = 'Отмена';
   static const centralHeating = 'Отопление';

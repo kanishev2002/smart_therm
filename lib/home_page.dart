@@ -8,6 +8,7 @@ import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/temperature_circle.dart';
 import 'package:smart_therm/temperature_circle_hero_transition.dart';
 import 'package:smart_therm/utils/utilities.dart';
+import 'package:smart_therm/weather_card.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -31,7 +32,12 @@ class HomePage extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (state.deviceData.isEmpty) {
-          return const Center(child: Text(HomePageConstants.noDevicesAdded));
+          return const Center(
+            child: Text(
+              HomePageConstants.noDevicesAdded,
+              textAlign: TextAlign.center,
+            ),
+          );
         }
         final device = state.deviceData[state.selectedDevice];
         final data = device.data!;
@@ -50,7 +56,8 @@ class HomePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 32),
+                const WeatherCard(),
+                const SizedBox(height: 16),
                 Wrap(
                   alignment: WrapAlignment.spaceAround,
                   runSpacing: 16,
@@ -59,9 +66,8 @@ class HomePage extends StatelessWidget {
                       temperatureCircle: TemperatureCircle(
                         enabled: data.heatingOn,
                         targetTemperature: device.heatingTemperature.toDouble(),
-                        actualTemperature: device.usePID
-                            ? averageTemperature
-                            : data.actualHeatingTemperature,
+                        actualTemperature:
+                            device.usePID ? averageTemperature : data.actualHeatingTemperature,
                         minTemperature: -5,
                         maxTemperature: device.usePID ? 35 : 100,
                         label: HomePageConstants.waterHeaterTemperature,
@@ -77,8 +83,7 @@ class HomePage extends StatelessWidget {
                     TemperatureCircleHeroTransition(
                       temperatureCircle: TemperatureCircle(
                         enabled: data.hotWaterOn,
-                        targetTemperature:
-                            device.hotWaterTemperature.toDouble(),
+                        targetTemperature: device.hotWaterTemperature.toDouble(),
                         actualTemperature: data.actualHotWaterTemperature,
                         maxTemperature: 100,
                         minTemperature: 5,

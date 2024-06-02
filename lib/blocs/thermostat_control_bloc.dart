@@ -10,8 +10,7 @@ import 'package:smart_therm/services/network_service.dart';
 
 part 'thermostat_control_event.dart';
 
-class ThermostatControlBloc
-    extends HydratedBloc<ThermostatControlEvent, ThermostatControlState> {
+class ThermostatControlBloc extends HydratedBloc<ThermostatControlEvent, ThermostatControlState> {
   ThermostatControlBloc({required this.networkService})
       : super(
           ThermostatControlState(
@@ -99,8 +98,7 @@ class ThermostatControlBloc
   ) async {
     try {
       final burnerOn = state.deviceData[state.selectedDevice].data!.heatingOn;
-      final updatedDevice =
-          state.deviceData[state.selectedDevice].copyWith.data!(
+      final updatedDevice = state.deviceData[state.selectedDevice].copyWith.data!(
         heatingOn: !burnerOn,
       );
       final newData = [...state.deviceData];
@@ -119,8 +117,8 @@ class ThermostatControlBloc
   ) async {
     emit(state.copyWith(status: LoadingStatus.loading));
     try {
-      final deviceInfo =
-          await networkService.fetchNewThermostatData(event.device);
+      await networkService.connectToThermostat(event.device);
+      final deviceInfo = await networkService.getThermostatStatus();
 
       final thermostatWithData = event.device.copyWith(data: deviceInfo);
       final newData = [
@@ -128,37 +126,24 @@ class ThermostatControlBloc
         thermostatWithData,
       ];
 
-      if (newData.length == 1) {
-        await networkService.connectToThermostat(thermostatWithData);
-      }
-
       emit(
         state.copyWith(
           deviceData: newData,
+          selectedDevice: newData.length - 1,
           status: LoadingStatus.done,
           customHeatingTemperature: event.device.usePID ? 15 : 60,
-          customHotWaterTemperature: 60,
+          customHotWaterTemperature: 40,
         ),
       );
-
-      // final mockData = ThermostatData(
-      //   heatingOn: true,
-      //   hotWaterOn: true,
-      //   heatingTemperature: 10,
-      //   hotWaterTemperature: 10,
-      //   roomTemperature1: 10,
-      //   roomTemperature2: 10,
-      // );
-
-      // emit(
-      //   state.copyWith(
-      //     deviceData: [
-      //       ...state.deviceData,
-      //       event.device.copyWith(data: mockData),
-      //     ],
-      //   ),
-      // );
     } catch (e) {
+      debugPrint('Could not connect to new device: $e');
+      try {
+        final currentDevice = state.deviceData[state.selectedDevice];
+        await networkService.connectToThermostat(currentDevice);
+      } catch (e) {
+        debugPrint('Could not reconnect to current device: $e');
+      }
+
       emit(state.copyWith(status: LoadingStatus.error));
     }
   }
@@ -175,8 +160,7 @@ class ThermostatControlBloc
       await networkService.setParameters(updated);
       final newData = [...state.deviceData];
       newData[state.selectedDevice] = updated;
-      final customTemp =
-          event.isCustom ? event.temperature : state.customHeatingTemperature;
+      final customTemp = event.isCustom ? event.temperature : state.customHeatingTemperature;
       emit(
         state.copyWith(
           deviceData: newData,
@@ -201,8 +185,7 @@ class ThermostatControlBloc
       await networkService.setParameters(updated);
       final newData = [...state.deviceData];
       newData[state.selectedDevice] = updated;
-      final customTemp =
-          event.isCustom ? event.temperature : state.customHotWaterTemperature;
+      final customTemp = event.isCustom ? event.temperature : state.customHotWaterTemperature;
       emit(
         state.copyWith(
           deviceData: newData,
@@ -281,10 +264,10 @@ class ThermostatControlBloc
     }
   }
 
-  Future<void> _onDeleteDevice(
+  void _onDeleteDevice(
     DeleteDevice event,
     Emitter<ThermostatControlState> emit,
-  ) async {
+  ) {
     final updatedData = [...state.deviceData]..removeAt(event.index);
     emit(state.copyWith(deviceData: updatedData, status: LoadingStatus.done));
   }
@@ -316,10 +299,8 @@ class ThermostatControlBloc
     Emitter<ThermostatControlState> emit,
   ) async {
     try {
-      final hotWaterOn =
-          state.deviceData[state.selectedDevice].data!.hotWaterOn;
-      final updatedDevice =
-          state.deviceData[state.selectedDevice].copyWith.data!(
+      final hotWaterOn = state.deviceData[state.selectedDevice].data!.hotWaterOn;
+      final updatedDevice = state.deviceData[state.selectedDevice].copyWith.data!(
         hotWaterOn: !hotWaterOn,
       );
       final newData = [...state.deviceData];

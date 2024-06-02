@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
+import 'package:smart_therm/blocs/weather_bloc.dart';
 import 'package:smart_therm/constants.dart';
 import 'package:smart_therm/devices_page.dart';
 import 'package:smart_therm/graphs_page.dart';
@@ -17,6 +19,7 @@ Future<void> main() async {
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: await getApplicationDocumentsDirectory(),
   );
+  await dotenv.load();
   runApp(const MyApp());
 }
 
@@ -25,18 +28,28 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ThermostatControlBloc>(
-      create: (ctx) {
-        final bloc = ThermostatControlBloc(
-          networkService: NetworkService(),
-        );
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ThermostatControlBloc>(
+          create: (ctx) {
+            final bloc = ThermostatControlBloc(
+              networkService: NetworkService(),
+            );
 
-        if (bloc.state.deviceData.isNotEmpty) {
-          bloc.add(const AppStartRefresh());
-        }
+            if (bloc.state.deviceData.isNotEmpty) {
+              bloc.add(const AppStartRefresh());
+            }
 
-        return bloc;
-      },
+            return bloc;
+          },
+        ),
+        BlocProvider<WeatherBloc>(
+          create: (ctx) {
+            final apiKey = dotenv.get('WEATHER_API_KEY');
+            return WeatherBloc(apiKey: apiKey)..add(const GetWeather());
+          },
+        ),
+      ],
       child: MaterialApp(
         title: 'Smart Therm',
         color: Colors.white,
@@ -92,8 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            _pageIndex == 0 ? const HeaterPickerHeader() : Text(widget.title),
+        title: _pageIndex == 0 ? const HeaterPickerHeader() : Text(widget.title),
       ),
       bottomNavigationBar: NavigationBar(
         destinations: _destinations,

@@ -1,22 +1,27 @@
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:smart_therm/models/miscellaneous_data.dart';
 import 'package:smart_therm/models/tcp_connection.dart';
 import 'package:smart_therm/models/thermostat.dart';
 import 'package:smart_therm/models/thermostat_data.dart';
 import 'package:smart_therm/models/thermostat_request.dart';
 
+part 'tcp_network_service.dart';
+part 'mqtt_network_service.dart';
+part 'network_service_impl.dart';
+
 class NetworkService {
   NetworkService();
 
-  TCPConnection? _currentConnection;
+  late _NetworkServiceImpl _impl;
 
   Future<void> connectToThermostat(Thermostat t) async {
-    await _currentConnection?.close();
-    final deviceIP = InternetAddress(t.ip);
-    _currentConnection = TCPConnection(ip: deviceIP);
-    await _currentConnection!.start();
+    _impl = t.useMQTT ? _MQTTNetworkService() : _TCPNetworkService();
+    await _impl.connectToThermostat(t);
   }
 
   // Future<ThermostatData> updateThermostatData(Thermostat device) async {
@@ -27,175 +32,17 @@ class NetworkService {
   //   final thermostatData = await getThermostatStatus(ip);
   // }
 
-  Future<ThermostatData> fetchNewThermostatData(Thermostat device) async {
-    final ip = InternetAddress(device.ip);
-    final connection = TCPConnection(ip: ip);
-    await connection.start();
-    final thermostatData = await getThermostatStatus(
-      thermostatConnection: connection,
-    );
-    await connection.close();
-    return thermostatData;
+  // Future<ThermostatData> fetchNewThermostatData(Thermostat device) async {
+  //   return _impl.fetchNewThermostatData(device);
+  // }
+
+  Future<ThermostatData> getThermostatStatus() async {
+    return _impl.getThermostatStatus();
   }
 
-  Future<ThermostatData> getThermostatStatus({
-    TCPConnection? thermostatConnection,
-  }) async {
-    try {
-      final connection = thermostatConnection ?? _currentConnection;
-      if (connection == null) {
-        throw 'Not connected to any thermostat';
-      }
-      final request = ThermostatRequest(
-        cmd0: 0x22,
-        cmd: 0x23,
-        buffer: Uint8List(0),
-      );
-
-      final response = await connection.submitRequest(request);
-      final responseBuffer = response.buffer;
-
-      const outputLength = 64;
-
-      if (responseBuffer.length != outputLength) {
-        throw 'Incorrect response size';
-      }
-
-      final controllerData = responseBuffer.buffer.asByteData();
-
-      _printDebugInfo(controllerData);
-
-      final boolFlags = controllerData.getInt16(6, Endian.little);
-
-      final heatingEnabled = (boolFlags & Flags.heating) != 0;
-      final hotWaterEnabled = (boolFlags & Flags.hotWater) != 0;
-      final hasTemperatureSensors = (boolFlags & Flags.temperatureSensors) != 0;
-
-      final boilerTemperature = controllerData.getFloat32(24, Endian.little);
-      final hotWater = controllerData.getFloat32(40, Endian.little);
-      final t1 = controllerData.getFloat32(56, Endian.little);
-      final t2 = controllerData.getFloat32(60, Endian.little);
-
-      return ThermostatData(
-        heatingOn: heatingEnabled,
-        hotWaterOn: hotWaterEnabled,
-        hasTemperatureSensors: hasTemperatureSensors,
-        actualHeatingTemperature: boilerTemperature,
-        actualHotWaterTemperature: hotWater,
-        roomTemperature1: t1,
-        roomTemperature2: t2,
-        miscellaneousData: _getMiscData(controllerData),
-      );
-    } catch (e) {
-      debugPrint(e.toString());
-      rethrow;
-    }
-  }
-
-  Future<ThermostatResponse> setParameters(
+  Future<void> setParameters(
     Thermostat thermostat,
   ) async {
-    final thermostatSettings = thermostat.data!;
-    var flags = 0;
-    if (thermostatSettings.heatingOn) {
-      flags |= 0x01;
-    }
-    if (thermostatSettings.hotWaterOn) {
-      flags |= 0x02;
-    }
-    final data = Uint8List(64);
-    data.buffer.asByteData()
-      ..setInt16(0, flags, Endian.little)
-      ..setFloat32(
-        2,
-        thermostat.heatingTemperature.toDouble(),
-        Endian.little,
-      )
-      ..setFloat32(
-        6,
-        thermostat.heatingTemperature.toDouble(),
-        Endian.little,
-      )
-      ..setFloat32(
-        10,
-        thermostat.hotWaterTemperature.toDouble(),
-        Endian.little,
-      );
-
-    final request = ThermostatRequest(cmd0: 0x22, cmd: 0x24, buffer: data);
-
-    final response = await _currentConnection!.submitRequest(request);
-
-    return response;
+    return _impl.setParameters(thermostat);
   }
-
-  MiscellaneousData _getMiscData(ByteData controllerData) {
-    final boolFlags = controllerData.getInt16(6, Endian.little);
-
-    final openThermStatus = controllerData.getInt16(8, Endian.little);
-    final boilerStatus = controllerData.getInt32(20, Endian.little);
-    final retT = controllerData.getFloat32(28, Endian.little);
-    final modulation = controllerData.getFloat32(44, Endian.little);
-    final pressure = controllerData.getFloat32(48, Endian.little);
-
-    return MiscellaneousData(
-      secondHeatingCircuitAvailable: (boolFlags & 0x20) != 0,
-      burnerOn: true, // TODO: find out how to check
-      openThermStatus: openThermStatus,
-      boilerStatus: boilerStatus,
-      returningTemp: retT,
-      modulation: modulation,
-      pressure: pressure,
-    );
-  }
-
-  void _printDebugInfo(ByteData controllerData) {
-    final boolFlags = controllerData.getInt16(6, Endian.little);
-
-    final openThermStatus = controllerData.getInt16(8, Endian.little);
-    final boilerStatus = controllerData.getInt32(20, Endian.little);
-    final boilerT = controllerData.getFloat32(24, Endian.little);
-    final retT = controllerData.getFloat32(28, Endian.little);
-    final tSet = controllerData.getFloat32(32, Endian.little);
-    final tSet_r = controllerData.getFloat32(36, Endian.little);
-    final dhw_t = controllerData.getFloat32(40, Endian.little);
-    final modulation = controllerData.getFloat32(44, Endian.little);
-    final pressure = controllerData.getFloat32(48, Endian.little);
-    final status = controllerData.getInt32(52, Endian.little);
-    final t1 = controllerData.getFloat32(56, Endian.little);
-    final t2 = controllerData.getFloat32(60, Endian.little);
-
-    debugPrint('''
-Got boiler status:
-Central heating enabled: ${(boolFlags & 0x01) != 0}
-Hot water enabled: ${(boolFlags & 0x02) != 0}
-Hot water present: ${(boolFlags & 0x10) != 0}
-Second heating circuit available: ${(boolFlags & 0x20) != 0}
-Outiside temp sensors available: ${(boolFlags & 0x40) != 0}
-Water pressure sensor available: ${(boolFlags & 0x80) != 0}
-MQTT available: ${(boolFlags & 0x100) != 0}
-MQTT is used: ${(boolFlags & 0x200) != 0}
-PID regulator available: ${(boolFlags & 0x400) != 0}
-PID regulator is used: ${(boolFlags & 0x800) != 0}
-
-OpenTherm status: $openThermStatus
-Boiler status: $boilerStatus
-Boiler temperature: $boilerT
-retT: $retT
-tSet: $tSet
-tSet_r: $tSet_r
-dhw_t: $dhw_t
-modulation: $modulation
-Pressure: $pressure
-Status: $status
-t1: $t1
-t2: $t2
-''');
-  }
-}
-
-class Flags {
-  static const heating = 0x01;
-  static const hotWater = 0x02;
-  static const temperatureSensors = 0x40;
 }

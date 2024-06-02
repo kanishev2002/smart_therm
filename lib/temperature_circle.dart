@@ -29,9 +29,7 @@ class TemperatureCircle extends StatelessWidget {
       return Colors.grey;
     }
     final midpoint = (minTemperature + maxTemperature) / 2;
-    final intensity = (targetTemperature - midpoint).abs() /
-        (maxTemperature - midpoint) *
-        0.4;
+    final intensity = (targetTemperature - midpoint).abs() / (maxTemperature - midpoint) * 0.4;
     return targetTemperature < midpoint
         ? Colors.blue.withOpacity(0.6 + intensity)
         : const Color(0xFFF00000).withOpacity(0.6 + intensity);
@@ -68,8 +66,7 @@ class TemperatureCircle extends StatelessWidget {
                   child: CustomPaint(
                     painter: _PartialCirclePainter(
                       fillPercentage: enabled
-                          ? (targetTemperature - minTemperature) /
-                              (maxTemperature - minTemperature)
+                          ? (targetTemperature - minTemperature) / (maxTemperature - minTemperature)
                           : 1,
                       color: getColorFromTemperature(),
                     ),
@@ -85,9 +82,7 @@ class TemperatureCircle extends StatelessWidget {
                           const SizedBox(width: 4),
                         ],
                         Text(
-                          enabled
-                              ? '${targetTemperature.toStringAsFixed(1)}°'
-                              : 'Off',
+                          enabled ? '${targetTemperature.toStringAsFixed(1)}°' : 'Off',
                           style: GoogleFonts.montserrat(
                             textStyle: const TextStyle(
                               color: Colors.black,
@@ -110,9 +105,13 @@ class TemperatureCircle extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            AutoSizeText(
-              label ?? '',
-              style: const TextStyle(fontSize: 14),
+            SizedBox(
+              width: containerSize,
+              child: AutoSizeText(
+                label ?? '',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14),
+              ),
             ),
           ],
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_therm/blocs/thermostat_control_bloc.dart';
 import 'package:smart_therm/constants.dart';
+import 'package:smart_therm/models/mqtt_data.dart';
 import 'package:smart_therm/models/thermostat.dart';
 import 'package:smart_therm/models/thermostat_control_state.dart';
 import 'package:smart_therm/utils/utilities.dart';
@@ -17,7 +18,11 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
   final _formKey = GlobalKey<FormState>();
   final _deviceNameController = TextEditingController();
   final _deviceIPController = TextEditingController();
+  final _mqttIPController = TextEditingController();
+  final _mqttUsernameController = TextEditingController();
+  final _mqttPasswordController = TextEditingController();
   bool _usePID = false;
+  bool _useMQTT = false;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +58,14 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
                         ip: _deviceIPController.text,
                         usePID: _usePID,
                         heatingTemperature: _usePID ? 22 : 50,
+                        useMQTT: _useMQTT,
+                        mqttData: _useMQTT
+                            ? MQTTData(
+                                brokerIP: _mqttIPController.text,
+                                username: _mqttUsernameController.text,
+                                password: _mqttPasswordController.text,
+                              )
+                            : null,
                       );
                       context.read<ThermostatControlBloc>().add(
                             AddDevice(
@@ -86,25 +99,25 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _deviceIPController,
-                          decoration: const InputDecoration(
-                            labelText: AddEditFormConstants.ipFieldLabel,
-                            border: OutlineInputBorder(),
+                        if (!_useMQTT)
+                          TextFormField(
+                            controller: _deviceIPController,
+                            decoration: const InputDecoration(
+                              labelText: AddEditFormConstants.ipFieldLabel,
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AddEditFormConstants.emptyIpError;
+                              }
+                              // Basic IP validation
+                              final ipRegExp = RegExp(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$');
+                              if (!ipRegExp.hasMatch(value)) {
+                                return AddEditFormConstants.incorrectIpError;
+                              }
+                              return null;
+                            },
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return AddEditFormConstants.emptyIpError;
-                            }
-                            // Basic IP validation
-                            final ipRegExp =
-                                RegExp(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$');
-                            if (!ipRegExp.hasMatch(value)) {
-                              return AddEditFormConstants.incorrectIpError;
-                            }
-                            return null;
-                          },
-                        ),
                         const SizedBox(height: 16),
                         Row(
                           children: [
@@ -120,6 +133,27 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
                             const Text(AddEditFormConstants.usePIDLabel),
                           ],
                         ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _useMQTT,
+                              onChanged: (value) {
+                                setState(() {
+                                  _useMQTT = value!;
+                                });
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(AddEditFormConstants.useMQTTLabel),
+                          ],
+                        ),
+                        if (_useMQTT)
+                          MQTTInfoForm(
+                            ipController: _mqttIPController,
+                            usernameController: _mqttUsernameController,
+                            passwordController: _mqttPasswordController,
+                          ),
                       ],
                     ),
                   ),
@@ -135,6 +169,68 @@ class _DeviceCreationFormState extends State<DeviceCreationForm> {
           ),
         );
       },
+    );
+  }
+}
+
+class MQTTInfoForm extends StatelessWidget {
+  const MQTTInfoForm({
+    required this.ipController,
+    required this.usernameController,
+    required this.passwordController,
+    super.key,
+  });
+
+  final TextEditingController ipController;
+  final TextEditingController usernameController;
+  final TextEditingController passwordController;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextFormField(
+          controller: ipController,
+          decoration: const InputDecoration(
+            labelText: AddEditFormConstants.mqttAddressLabel,
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return AddEditFormConstants.emptyIpError;
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: usernameController,
+          decoration: const InputDecoration(
+            labelText: AddEditFormConstants.mqttUsernameLabel,
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return AddEditFormConstants.thisFieldIsRequired;
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: passwordController,
+          decoration: const InputDecoration(
+            labelText: AddEditFormConstants.mqttPasswordLabel,
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return AddEditFormConstants.thisFieldIsRequired;
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 }
