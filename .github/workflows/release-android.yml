@@ -24,6 +24,10 @@ jobs:
       with:
         channel: stable
     
+    - name: Create .env file
+      run: |
+        echo "WEATHER_API_KEY=${{ secrets.WEATHER_API_KEY }}" >> .env
+    
     - name: Get packages
       run: flutter pub get
     
