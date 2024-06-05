@@ -1,16 +1,25 @@
 # smart_therm
 
-A new Flutter project.
+## Описание проекта
 
-## Getting Started
+Приложение SmartTherm позволяет управлять котлами с подддержкой протокола OpenTherm при помощи контроллера [SmartTherm](https://github.com/Evgen2/SmartTherm).
+На выбор предлагается два варианта управления котлом: через TCP соединение, либо при помощи MQTT-брокера.
+В приложении можно найти 3 вкладки:
+1. Панель управления: здесь происходит собственно управление котлом и отображаются показания датчиков. Можно выбрать температуру отопления и горячей воды для мытья рук, нажав на соответствующий кружок. Там же можно включить и выключить отопление или горячую воду. Также есть возможность выбрать каким котлом управлять, нажав на имя котла в верхней панели приложения. Информация с котла обновляется раз в минуту. Обновить информацию с котла можно вручную, потянув вниз (жест pull to refresh).
+2. Панель управления устройствами: на этой вкладке можно добавлять и удалять котлы и изменять название и IP-адрес котла.
+3. Панель графиков: для доступа к этой странице необходимо использовать Home Assistant для подключения котла по MQTT. Если все настроено правильно, то при переходе на эту страницу будет показано окно логина в HomeAssistant, где можно в том числе посмотреть графики температуры и других показаний датчиков котла.
 
-This project is a starting point for a Flutter application.
+## Установка для разработчиков
 
-A few resources to get you started if this is your first Flutter project:
+Для того чтобы отлаживать приложение и работать над ним на своем компьютере, нужно выполнить следующие шаги:
+1. Установить желаемую среду разработки. Рекомендуется [Android Studio](https://developer.android.com/studio), либо [VS Code](https://code.visualstudio.com/Download) с соответствующим [плагином](https://marketplace.visualstudio.com/items?itemName=Dart-Code.flutter)
+2. Установить [Flutter](https://docs.flutter.dev/get-started/install).
+3. Получить [ключ weatherapi](https://www.weatherapi.com). Это бесплатно, требуется только электронная почта.
+4. Склонировать этот репозиторий.
+5. Создать в корне репозитория файл `.env` с записью `WEATHER_API_KEY=` и вставить ключ weatherapi из шага 3.
+6. Перейти в терминале в корень репозитория и запустить `flutter pub get`, а затем `dart run build_runner build --delete-conflicting-outputs`, чтобы собрать все зависимости.
+7. Подключить смартфон или эмулятор и запустить приложение.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Установка готового билда
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+В данный момент реализован механизм (git action), автоматически создающий билд приложения для Android. Для личного пользования рекомендуется скачать новейший билд в формате APK в [разделе релизов](https://github.com/kanishev2002/smart_therm/releases).
